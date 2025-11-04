@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import SplashScreen from './pages/SplashScreen'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 import { useAuth } from './hooks/useAuth'
 import './styles/App.css'
 
@@ -29,6 +30,7 @@ function App() {
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
