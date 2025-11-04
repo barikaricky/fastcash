@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fastcash-postgres
+    environment:
+      POSTGRES_USER: fastcash
+      POSTGRES_PASSWORD: fastcash_dev
+      POSTGRES_DB: fastcash_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fastcash"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    container_name: fastcash-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: fastcash
+      MONGO_INITDB_ROOT_PASSWORD: fastcash_dev
+      MONGO_INITDB_DATABASE: fastcash_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: fastcash-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:

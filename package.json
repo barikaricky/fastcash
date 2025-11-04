@@ -1,0 +1,26 @@
+{
+  "name": "fastcash",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/api/gateway",
+    "apps/api/auth-service",
+    "apps/api/transaction-service",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:gateway\" \"npm run dev:auth\" \"npm run dev:transactions\"",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:gateway": "npm run dev --workspace=apps/api/gateway",
+    "dev:auth": "npm run dev --workspace=apps/api/auth-service",
+    "dev:transactions": "npm run dev --workspace=apps/api/transaction-service",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "setup": "./scripts/setup.sh",
+    "install:all": "npm install && npm install --workspaces"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
