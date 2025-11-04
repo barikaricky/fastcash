@@ -1,42 +1,18 @@
-# Dependencies
-node_modules/
-venv/
-__pycache__/
-*.pyc
-
-# Build outputs
-dist/
-build/
-.next/
-*.tsbuildinfo
-
-# Environment files
-.env
+# Only ignore truly sensitive or unnecessary files
 .env.local
 .env.*.local
 
 # IDE
-.vscode/
+.vscode/settings.json
 .idea/
-*.swp
-*.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
 
 # Logs
-logs/
 *.log
 npm-debug.log*
-
-# Database
-*.sqlite
-*.db
-
-# Docker
-.docker/
 
 # Test coverage
 coverage/
@@ -45,3 +21,9 @@ coverage/
 # Temporary files
 *.tmp
 .cache/
+
+# Build artifacts (but keep node_modules)
+dist/
+build/
+.next/
+*.tsbuildinfo
