@@ -1217,6 +1217,42 @@
   box-shadow: var(--shadow-large);
 }
 
+/* KYC Note */
+.kyc-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 149, 0, 0.1);
+  padding: 0.875rem;
+  border-radius: 10px;
+  font-size: 0.813rem;
+  font-weight: 500;
+  color: var(--color-warning);
+  margin-top: 1.5rem;
+  border: 1px solid rgba(255, 149, 0, 0.2);
+}
+
+/* Welcome Modal Updates */
+.welcome-subtitle {
+  color: var(--color-text-secondary);
+  font-size: 0.938rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.welcome-info {
+  background: var(--color-bg-light);
+  padding: 1rem;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+  text-align: left;
+}
+
+.welcome-info p {
+  margin: 0.5rem 0 !important;
+  font-size: 0.938rem !important;
+  color: var(--color-text-primary) !important;
+}
+
 /* Responsive Design */
 @media (max-width: 640px) {
   .kyc-upload-buttons {

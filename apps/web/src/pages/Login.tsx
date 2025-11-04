@@ -137,9 +137,10 @@ const Login = () => {
     }
 
     setIsLoading(true)
+    setErrors({})
     
     try {
-      // Simulate API call to /auth/login
+      // Call the actual API
       const response = await fetch('http://localhost:3001/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -150,18 +151,31 @@ const Login = () => {
         }),
       })
 
-      // Simulate successful login
-      setTimeout(() => {
+      const data = await response.json()
+
+      if (!response.ok) {
         setIsLoading(false)
-        if (enableBiometrics || Math.random() > 0.5) {
-          setShowMFAModal(true)
-        } else {
-          completeLogin()
-        }
-      }, 1500)
+        setErrors({ form: data.error || 'Login failed. Please try again.' })
+        setShake(true)
+        setTimeout(() => setShake(false), 500)
+        return
+      }
+
+      // Store the token
+      localStorage.setItem('auth_token', data.data.token)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
+      
+      setIsLoading(false)
+
+      // Check if MFA is required
+      if (data.data.requiresMFA || enableBiometrics) {
+        setShowMFAModal(true)
+      } else {
+        completeLogin()
+      }
     } catch (error) {
       setIsLoading(false)
-      setErrors({ form: 'Login failed. Please try again.' })
+      setErrors({ form: 'Network error. Please check your connection.' })
       setShake(true)
       setTimeout(() => setShake(false), 500)
     }

@@ -123,12 +123,7 @@ const Signup = () => {
   const [emailChecking, setEmailChecking] = useState(false)
   const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null)
 
-  // Step 2: KYC Verification
-  const [kycDocument, setKycDocument] = useState<File | null>(null)
-  const [kycStatus, setKycStatus] = useState<'idle' | 'uploading' | 'verifying' | 'verified' | 'failed'>('idle')
-  const [kycPreview, setKycPreview] = useState<string>('')
-
-  // Step 3: MFA Setup
+  // Step 2: MFA Setup
   const [enableBiometrics, setEnableBiometrics] = useState(false)
   const [totpSecret, setTotpSecret] = useState('JBSWY3DPEHPK3PXP')
   const [verificationCode, setVerificationCode] = useState('')
@@ -155,9 +150,27 @@ const Signup = () => {
 
     const timer = setTimeout(async () => {
       setEmailChecking(true)
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800))
-      setEmailAvailable(Math.random() > 0.3) // 70% available
+      
+      try {
+        // Call the actual API
+        const response = await fetch('http://localhost:3001/api/auth/check-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+
+        const data = await response.json()
+        
+        if (response.ok) {
+          setEmailAvailable(data.available)
+        } else {
+          setEmailAvailable(null)
+        }
+      } catch (error) {
+        console.error('Email check failed:', error)
+        setEmailAvailable(null)
+      }
+      
       setEmailChecking(false)
     }, 500)
 
@@ -199,36 +212,6 @@ const Signup = () => {
     return Object.keys(newErrors).length === 0
   }
 
-  // Handle document upload
-  const handleDocumentUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setKycDocument(file)
-      setKycStatus('uploading')
-      
-      // Create preview
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setKycPreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-
-      // Simulate upload and AI verification
-      setTimeout(() => {
-        setKycStatus('verifying')
-        setTimeout(() => {
-          setKycStatus('verified')
-        }, 2000)
-      }, 1500)
-    }
-  }
-
-  // Handle camera capture
-  const handleCameraCapture = () => {
-    // In a real app, this would open the camera
-    alert('Camera feature would open here. For web, you can use getUserMedia API.')
-  }
-
   const handleNext = () => {
     if (currentStep === 1) {
       if (!validateStep1()) {
@@ -238,14 +221,7 @@ const Signup = () => {
       }
     }
 
-    if (currentStep === 2 && kycStatus !== 'verified') {
-      setErrors({ kyc: 'Please upload and verify your document' })
-      setShake(true)
-      setTimeout(() => setShake(false), 500)
-      return
-    }
-
-    if (currentStep < 3) {
+    if (currentStep < 2) {
       setCurrentStep(currentStep + 1)
       setErrors({})
     } else {
@@ -263,7 +239,17 @@ const Signup = () => {
   }
 
   const handleComplete = async () => {
-    // Simulate API call
+    // Validate verification code for step 2
+    if (verificationCode.length !== 6) {
+      setErrors({ verificationCode: 'Please enter the 6-digit verification code' })
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
+      return
+    }
+
+    setErrors({})
+
+    // Call the actual registration API
     try {
       const response = await fetch('http://localhost:3001/api/auth/register', {
         method: 'POST',
@@ -273,16 +259,32 @@ const Signup = () => {
           email,
           phone: `${countryCode}${phone}`,
           password,
-          kycDocumentId: 'doc_' + Date.now(),
+          kycDocumentId: null,  // KYC will be done later
           enableBiometrics,
           totpSecret,
         }),
       })
 
-      localStorage.setItem('auth_token', 'demo-jwt-token-' + Date.now())
+      const data = await response.json()
+
+      if (!response.ok) {
+        setErrors({ form: data.error || 'Registration failed. Please try again.' })
+        setShake(true)
+        setTimeout(() => setShake(false), 500)
+        return
+      }
+
+      // Store the token and user data
+      localStorage.setItem('auth_token', data.data.token)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
+      localStorage.setItem('kyc_completed', 'false')  // Mark KYC as incomplete
+      
+      // Show welcome modal
       setShowWelcomeModal(true)
     } catch (error) {
-      setErrors({ form: 'Registration failed. Please try again.' })
+      setErrors({ form: 'Network error. Please check your connection.' })
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
     }
   }
 
@@ -291,7 +293,7 @@ const Signup = () => {
     navigate('/dashboard')
   }
 
-  const progressPercentage = (currentStep / 3) * 100
+  const progressPercentage = (currentStep / 2) * 100
 
   return (
     <div className={`signup-screen ${shake ? 'shake' : ''}`}>
@@ -318,11 +320,7 @@ const Signup = () => {
             </div>
             <div className={`progress-step ${currentStep >= 2 ? 'active' : ''}`}>
               <div className="step-number">{currentStep > 2 ? <CheckIcon /> : '2'}</div>
-              <span className="step-label">Verify</span>
-            </div>
-            <div className={`progress-step ${currentStep >= 3 ? 'active' : ''}`}>
-              <div className="step-number">3</div>
-              <span className="step-label">MFA</span>
+              <span className="step-label">Security</span>
             </div>
           </div>
         </div>
@@ -345,7 +343,6 @@ const Signup = () => {
               </div>
               {errors.fullName && <span className="error-text">{errors.fullName}</span>}
             </div>
-
             <div className="input-group">
               <label htmlFor="email">Email Address</label>
               <div className="input-wrapper">
@@ -364,7 +361,6 @@ const Signup = () => {
               </div>
               {errors.email && <span className="error-text">{errors.email}</span>}
             </div>
-
             <div className="input-group">
               <label htmlFor="phone">Phone Number</label>
               <div className="input-wrapper phone-wrapper">
@@ -386,7 +382,6 @@ const Signup = () => {
               </div>
               {errors.phone && <span className="error-text">{errors.phone}</span>}
             </div>
-
             <div className="input-group">
               <label htmlFor="password">Password</label>
               <div className="input-wrapper">
@@ -421,7 +416,6 @@ const Signup = () => {
               )}
               {errors.password && <span className="error-text">{errors.password}</span>}
             </div>
-
             <div className="input-group">
               <label htmlFor="confirmPassword">Confirm Password</label>
               <div className="input-wrapper">
@@ -443,68 +437,12 @@ const Signup = () => {
           </div>
         )}
 
-        {/* Step 2: KYC Verification */}
+        {/* Step 2: MFA Setup (was Step 3) */}
         {currentStep === 2 && (
           <div className="signup-step">
-            <div className="kyc-section">
-              <h3 className="section-title">Identity Verification</h3>
-              <p className="section-subtitle">Upload a government-issued ID for verification</p>
-
-              {kycPreview ? (
-                <div className="kyc-preview-container">
-                  <img src={kycPreview} alt="Document preview" className="kyc-preview" />
-                  <div className="kyc-status">
-                    {kycStatus === 'uploading' && (
-                      <div className="status-item">
-                        <div className="status-spinner"></div>
-                        <span>Uploading...</span>
-                      </div>
-                    )}
-                    {kycStatus === 'verifying' && (
-                      <div className="status-item">
-                        <div className="status-spinner"></div>
-                        <span>AI Verification in progress...</span>
-                      </div>
-                    )}
-                    {kycStatus === 'verified' && (
-                      <div className="status-item success">
-                        <CheckCircleIcon size={24} />
-                        <span>Document Verified ✓</span>
-                      </div>
-                    )}
-                    {kycStatus === 'failed' && (
-                      <div className="status-item error">
-                        <XIcon size={24} />
-                        <span>Verification Failed</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="kyc-upload-buttons">
-                  <label className="kyc-upload-button">
-                    <input type="file" accept="image/*" onChange={handleDocumentUpload} hidden />
-                    <UploadIcon size={24} />
-                    <span>Upload Document</span>
-                  </label>
-                  <button type="button" onClick={handleCameraCapture} className="kyc-camera-button">
-                    <CameraIcon size={24} />
-                    <span>Take Photo</span>
-                  </button>
-                </div>
-              )}
-              
-              {errors.kyc && <span className="error-text">{errors.kyc}</span>}
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: MFA Setup */}
-        {currentStep === 3 && (
-          <div className="signup-step">
             <div className="mfa-setup-section">
-              <h3 className="section-title">Multi-Factor Authentication</h3>
-              <p className="section-subtitle">Secure your account with additional protection</p>
+              <h3 className="section-title">Secure Your Account</h3>
+              <p className="section-subtitle">Set up multi-factor authentication for added security</p>
 
               <div className="mfa-option">
                 <label className="checkbox-container">
@@ -523,7 +461,7 @@ const Signup = () => {
               </div>
 
               <div className="totp-setup">
-                <h4 className="totp-title">Backup Authenticator (TOTP)</h4>
+                <h4 className="totp-title">Authenticator App (TOTP)</h4>
                 <p className="totp-subtitle">Scan this QR code with your authenticator app</p>
                 
                 <div className="qr-code-container">
@@ -549,6 +487,12 @@ const Signup = () => {
                   />
                 </div>
               </div>
+
+              {/* KYC Note */}
+              <div className="kyc-note">
+                <ShieldIcon size={16} />
+                <span>Complete identity verification after signup to unlock full features</span>
+              </div>
             </div>
           </div>
         )}
@@ -565,7 +509,7 @@ const Signup = () => {
             {currentStep === 1 ? 'Back to Login' : 'Back'}
           </button>
           <button type="button" onClick={handleNext} className="next-button">
-            {currentStep === 3 ? 'Complete Setup' : 'Next'}
+            {currentStep === 2 ? 'Complete Setup' : 'Next'}
           </button>
         </div>
       </div>
@@ -578,9 +522,12 @@ const Signup = () => {
             <div className="welcome-icon">
               <CheckCircleIcon size={72} />
             </div>
-            <h2>Setup Complete!</h2>
-            <p>Welcome to FastCash</p>
-            <p className="welcome-message">Start Transacting Securely</p>
+            <h2>Welcome to FastCash!</h2>
+            <p className="welcome-subtitle">Your account has been created successfully</p>
+            <div className="welcome-info">
+              <p>✅ Account created</p>
+              <p>⚠️ Complete KYC verification to unlock all features</p>
+            </div>
             <button onClick={handleWelcomeComplete} className="welcome-button">
               Get Started
             </button>
