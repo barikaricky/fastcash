@@ -172,6 +172,144 @@ app.post('/api/auth/check-email', (req, res) => {
   });
 });
 
+// Google Login endpoint
+app.post('/api/auth/google-login', async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      error: 'Google token is required'
+    });
+  }
+
+  try {
+    // In production, verify the token with Google
+    // For now, we'll simulate it
+    // const ticket = await client.verifyIdToken({
+    //   idToken: token,
+    //   audience: GOOGLE_CLIENT_ID
+    // });
+    // const payload = ticket.getPayload();
+
+    // Simulated Google user data
+    const googleUser = {
+      email: 'google' + Date.now() + '@gmail.com',
+      name: 'Google User',
+      picture: 'https://via.placeholder.com/150'
+    };
+
+    // Check if user exists
+    let user = users.find(u => u.email === googleUser.email);
+
+    if (!user) {
+      // Create new user
+      user = {
+        id: 'user_' + Date.now(),
+        fullName: googleUser.name,
+        email: googleUser.email,
+        phone: null,
+        password: null, // No password for OAuth users
+        googleId: token,
+        picture: googleUser.picture,
+        createdAt: new Date().toISOString(),
+        verified: true
+      };
+      users.push(user);
+    }
+
+    // Generate JWT token
+    const jwtToken = 'jwt_' + Date.now() + '_' + user.id;
+
+    res.json({
+      success: true,
+      message: 'Google login successful',
+      data: {
+        token: jwtToken,
+        user: {
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+          picture: user.picture
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Google authentication failed'
+    });
+  }
+});
+
+// Google Signup endpoint
+app.post('/api/auth/google-signup', async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({
+      success: false,
+      error: 'Google token is required'
+    });
+  }
+
+  try {
+    // Simulated Google user data
+    const googleUser = {
+      email: 'google' + Date.now() + '@gmail.com',
+      name: 'Google User',
+      picture: 'https://via.placeholder.com/150'
+    };
+
+    // Check if user already exists
+    const existingUser = users.find(u => u.email === googleUser.email);
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        error: 'User already exists. Please login instead.'
+      });
+    }
+
+    // Create new user
+    const newUser = {
+      id: 'user_' + Date.now(),
+      fullName: googleUser.name,
+      email: googleUser.email,
+      phone: null,
+      password: null,
+      googleId: token,
+      picture: googleUser.picture,
+      kycDocumentId: null,
+      createdAt: new Date().toISOString(),
+      verified: true
+    };
+
+    users.push(newUser);
+
+    // Generate JWT token
+    const jwtToken = 'jwt_' + Date.now() + '_' + newUser.id;
+
+    res.status(201).json({
+      success: true,
+      message: 'Google signup successful',
+      data: {
+        token: jwtToken,
+        user: {
+          id: newUser.id,
+          fullName: newUser.fullName,
+          email: newUser.email,
+          picture: newUser.picture
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Google signup failed'
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🔐 Auth Service running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
