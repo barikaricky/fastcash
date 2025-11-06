@@ -78,6 +78,8 @@ const GoogleIcon = ({ size = 20 }: { size?: number }) => (
   </svg>
 )
 
+const API_BASE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:3001'
+
 const Login = () => {
   const [inputType, setInputType] = useState<'email' | 'phone'>('email')
   const [email, setEmail] = useState('')
@@ -150,7 +152,7 @@ const Login = () => {
     
     try {
       // Call the actual API
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -221,7 +223,7 @@ const Login = () => {
       setIsLoading(true)
       
       // Send Google token to your backend
-      const response = await fetch('http://localhost:3001/api/auth/google-login', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/google-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

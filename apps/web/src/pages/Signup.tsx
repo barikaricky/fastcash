@@ -116,6 +116,8 @@ const GoogleIcon = ({ size = 20 }: { size?: number }) => (
   </svg>
 )
 
+const API_BASE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:3001'
+
 const Signup = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [shake, setShake] = useState(false)
@@ -163,7 +165,7 @@ const Signup = () => {
       
       try {
         // Call the actual API
-        const response = await fetch('http://localhost:3001/api/auth/check-email', {
+        const response = await fetch(`${API_BASE_URL}/api/auth/check-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),
@@ -261,7 +263,7 @@ const Signup = () => {
 
     // Call the actual registration API
     try {
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -306,7 +308,7 @@ const Signup = () => {
   const handleGoogleSignup = async (credentialResponse: any) => {
     try {
       // Send Google token to your backend
-      const response = await fetch('http://localhost:3001/api/auth/google-signup', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/google-signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

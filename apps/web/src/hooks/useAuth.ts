@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+const API_BASE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:3001'
+
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
@@ -10,7 +12,7 @@ export const useAuth = () => {
     if (token) {
       // Validate token with API
       try {
-        const response = await fetch('http://localhost:3001/api/auth/verify', {
+        const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         setIsAuthenticated(response.ok)
@@ -24,6 +26,9 @@ export const useAuth = () => {
 
   const logout = () => {
     localStorage.removeItem('auth_token')
+    localStorage.removeItem('user')
+    localStorage.removeItem('mfa_enabled')
+    localStorage.removeItem('kyc_completed')
     setIsAuthenticated(false)
   }
 

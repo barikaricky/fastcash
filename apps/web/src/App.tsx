@@ -9,7 +9,7 @@ import { useAuth } from './hooks/useAuth'
 import './styles/App.css'
 
 // Google OAuth Client ID (you'll get this from Google Cloud Console)
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1234567890-abcdefghijklmnop.apps.googleusercontent.com'
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 function App() {
   const [isLoading, setIsLoading] = useState(true)
